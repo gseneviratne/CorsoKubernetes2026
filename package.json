@@ -1,0 +1,17 @@
+{
+  "name": "corso-k8s-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Applicazione Node di esempio per il corso Kubernetes",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.30",
+    "typescript": "^5.4.5"
+  }
+}
