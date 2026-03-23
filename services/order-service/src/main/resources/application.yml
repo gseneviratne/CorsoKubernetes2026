@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: order-service
+  data:
+    mongodb:
+      uri: mongodb://${MONGO_USER:orders}:${MONGO_PASSWORD:orders}@${MONGO_HOST:localhost}:${MONGO_PORT:27017}/${MONGO_DB:orderdb}?authSource=admin
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+server:
+  port: 8080

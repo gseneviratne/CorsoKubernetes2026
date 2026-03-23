@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kubernetes + Spring Boot Demo</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<main class="container">
+    <h1>Demo Microservizi su Kubernetes</h1>
+    <p>Frontend statico + catalog-service + order-service + PostgreSQL + MongoDB.</p>
+
+    <section class="card">
+        <h2>Catalogo Prodotti</h2>
+        <button id="load-products">Carica prodotti</button>
+        <ul id="products"></ul>
+    </section>
+
+    <section class="card">
+        <h2>Crea Ordine</h2>
+        <form id="order-form">
+            <label for="customer">Cliente</label>
+            <input id="customer" placeholder="Mario Rossi" required>
+            <label for="product">Prodotto</label>
+            <input id="product" placeholder="Laptop Pro 14" required>
+            <label for="qty">Quantita</label>
+            <input id="qty" type="number" min="1" value="1" required>
+            <label for="price">Prezzo unitario</label>
+            <input id="price" type="number" min="1" value="1000" required>
+            <button type="submit">Invia ordine</button>
+        </form>
+        <pre id="order-result"></pre>
+    </section>
+</main>
+
+<script src="main.js"></script>
+</body>
+</html>
