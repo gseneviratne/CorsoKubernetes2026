@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: order-service
-          image: ghcr.io/your-org/order-service:latest
+          image: order-service:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080

@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: catalog-service
-          image: ghcr.io/your-org/catalog-service:latest
+          image: catalog-service:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
