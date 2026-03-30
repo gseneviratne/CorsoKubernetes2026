@@ -1,0 +1,40 @@
+Vagrant.configure("2") do |config|
+  config.vm.box = "bento/ubuntu-24.04"
+
+  NUM_MASTER_NODES = 1
+  NUM_NODES = 3
+  SUBNET = "172.18.8"
+  MASTER_NODE_PREFIX = "k8s-master"
+  NODE_PREFIX = "k8s-node"
+  (1..NUM_MASTER_NODES).each do |i|
+    config.vm.define "#{MASTER_NODE_PREFIX}-#{i}" do |node|
+      node.vm.hostname = "#{MASTER_NODE_PREFIX}-#{i}"
+
+      node.vm.network "private_network", ip: "#{SUBNET}.#{110 + i}"
+
+      node.vm.provider "virtualbox" do |vb|
+        vb.memory = 2048
+        vb.cpus = 2
+      end
+
+      # Disable swap (required by Kubernetes)
+      node.vm.provision "shell", inline: "swapoff -a"
+    end
+  end
+
+  (1..NUM_NODES).each do |i|
+    config.vm.define "#{NODE_PREFIX}-#{i}" do |node|
+      node.vm.hostname = "#{NODE_PREFIX}-#{i}"
+
+      node.vm.network "private_network", ip: "#{SUBNET}.#{100 + i}"
+
+      node.vm.provider "virtualbox" do |vb|
+        vb.memory = 2048
+        vb.cpus = 2
+      end
+
+      # Disable swap (required by Kubernetes)
+      node.vm.provision "shell", inline: "swapoff -a"
+    end
+  end
+end
