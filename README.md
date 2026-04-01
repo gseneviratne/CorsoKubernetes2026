@@ -34,6 +34,23 @@ docker build -t order-service:latest ./services/order-service
 docker build -t frontend:latest ./frontend
 ```
 
+## Creazione cluster k3d
+
+Crea il cluster usando la configurazione presente nel repository:
+
+```bash
+k3d cluster create --config k3d/cluster-demo.yaml
+```
+
+## Deploy Ingress Controller
+
+Il cluster viene creato con Traefik disabilitato, quindi installa `ingress-nginx`:
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
+kubectl rollout status deployment/ingress-nginx-controller -n ingress-nginx
+```
+
 ## Import immagini nel cluster k3d
 
 Se hai gia' un cluster (es. `corso-demo`), importa le immagini locali:
@@ -63,3 +80,27 @@ Verifica risorse nel namespace `corso-demo`:
 ```bash
 kubectl get all -n corso-demo
 ```
+
+## Test frontend
+
+Dopo il deploy, puoi verificare che il frontend funzioni correttamente con questi step:
+
+1. Controlla che i pod del frontend siano in stato `Running`:
+
+```bash
+kubectl get pods -n corso-demo -l app=frontend
+```
+
+2. Apri il frontend nel browser:
+
+- aggiungi una entry in `/etc/hosts`:
+
+```bash
+echo "127.0.0.1 corso-k8s.local" | sudo tee -a /etc/hosts
+```
+
+- URL: [http://corso-k8s.local](http://corso-k8s.local)
+
+Esito atteso:
+- caricamento pagina con titolo "Corso Kubernetes 2026"
+- i pulsanti di test API (`Carica Catalogo` e `Carica Ordini`) sono visibili
