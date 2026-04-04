@@ -1,0 +1,69 @@
+# 1) Ingress: consentito da QUALSIASI pod nel namespace "monitoring" (solo namespaceSelector).
+#    Tipico: Prometheus/metrics che girano in un namespace dedicato.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-scrape-from-monitoring-ns
+  namespace: demo-app
+spec:
+  podSelector:
+    matchLabels:
+      app: web
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - protocol: TCP
+          port: 9090
+
+---
+# 2) Ingress: solo pod specifici in un altro namespace (namespaceSelector + podSelector).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-from-ingress-controller-ns
+  namespace: demo-app
+spec:
+  podSelector:
+    matchLabels:
+      app: frontend
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 80
+
+---
+# 3) Egress: verso pod in un altro namespace (solo namespaceSelector sul destinato).
+#    Tutti i pod nel namespace "shared-services" sono raggiungibili sulle porte indicate.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-to-shared-services-ns
+  namespace: demo-app
+spec:
+  podSelector:
+    matchLabels:
+      app: worker
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: shared-services
+      ports:
+        - protocol: TCP
+          port: 443

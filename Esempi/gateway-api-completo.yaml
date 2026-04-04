@@ -1,0 +1,76 @@
+# Esempio completo Gateway API (gateway.networking.k8s.io/v1).
+#
+# Richiede:
+# - CRD Gateway API installate (channel standard o experimental, coerente col controller).
+# - Una GatewayClass esistente (qui: "nginx" come con NGINX Gateway Fabric).
+# - Service backend nel namespace indicato.
+#
+# Risorse tipiche:
+# - Gateway: definisce listener (porte/protocolli) e delega le HTTPRoute ammesse.
+# - HTTPRoute: regole host/path e backendRefs verso Service (o resource implementate).
+# - ReferenceGrant: necessario se HTTPRoute e Service vivono in namespace diversi (non mostrato qui).
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: app-gateway
+  namespace: demo-app
+  labels:
+    app.kubernetes.io/name: example-gateway
+spec:
+  gatewayClassName: nginx
+  listeners:
+    - name: http
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: Same
+    # HTTPS: serve un Secret TLS nel namespace del Gateway (o policy TLS esterna secondo il controller)
+    # - name: https
+    #   port: 443
+    #   protocol: HTTPS
+    #   tls:
+    #     mode: Terminate
+    #     certificateRefs:
+    #       - kind: Secret
+    #         name: tls-app-example-com
+    #   allowedRoutes:
+    #     namespaces:
+    #       from: Same
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: app-httproute
+  namespace: demo-app
+spec:
+  parentRefs:
+    - name: app-gateway
+      sectionName: http
+  hostnames:
+    - app.example.com
+    - www.example.com
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /api/v1
+      backendRefs:
+        - name: api-service
+          port: 8080
+          weight: 1
+    - matches:
+        - path:
+            type: Exact
+            value: /healthz
+      backendRefs:
+        - name: api-service
+          port: 8080
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: frontend
+          port: 80

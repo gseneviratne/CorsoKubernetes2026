@@ -1,0 +1,80 @@
+# Ingress completo (API networking.k8s.io/v1) per ingress-nginx.
+#
+# Prima di applicare:
+# - Installa un Ingress Controller e un IngressClass (es. nginx: spec.ingressClassName: nginx).
+# - Crea i Service backend referenziati (frontend, api-service, ...).
+# - Per TLS: crea il Secret nel namespace, es.
+#   kubectl create secret tls tls-app-example-com --cert=path/tls.crt --key=path/tls.key -n demo-app
+# - Adatta host, nomi servizi, namespace e secret al tuo ambiente.
+#
+# Riferimento demo corso: k8s/07-ingress.yaml (host corso-k8s.local, path /api/catalog, ...).
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: app-ingress-completo
+  namespace: demo-app
+  labels:
+    app.kubernetes.io/name: my-app
+    app.kubernetes.io/component: ingress
+  annotations:
+    # Limiti richieste (nginx)
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "10"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    # Con blocco tls: s below, reindirizza HTTP -> HTTPS
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # Esempio rewrite (solo se serve path diversi dal Service); commentato
+    # nginx.ingress.kubernetes.io/rewrite-target: /$2
+    # Rate limiting (richiede modulo/annotazioni supportate dalla versione)
+    # nginx.ingress.kubernetes.io/limit-rps: "50"
+spec:
+  # Deve esistere una IngressClass con questo nome (es. installazione ingress-nginx)
+  ingressClassName: nginx
+
+  # Opzionale: fallback per richieste che non matchano le rules (serve un Service reale)
+  # defaultBackend:
+  #   service:
+  #     name: maintenance-page
+  #     port:
+  #       number: 80
+
+  tls:
+    - hosts:
+        - app.example.com
+        - api.example.com
+      secretName: tls-app-example-com
+
+  rules:
+    # Sito web (frontend)
+    - host: app.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80
+
+    # API REST su host dedicato
+    - host: api.example.com
+      http:
+        paths:
+          - path: /v1
+            pathType: Prefix
+            backend:
+              service:
+                name: api-service
+                port:
+                  number: 8080
+          # Esempio pathType Exact per un endpoint singolo
+          - path: /healthz
+            pathType: Exact
+            backend:
+              service:
+                name: api-service
+                port:
+                  number: 8080
