@@ -94,6 +94,12 @@ k3d image import order-service:latest -c corso-demo
 k3d image import frontend:latest -c corso-demo
 ```
 
+```bash
+k3d image import catalog-service:latest -c corso-demo-calico
+k3d image import order-service:latest -c corso-demo-calico
+k3d image import frontend:latest -c corso-demo-calico
+```
+
 Per verificare il nome del cluster:
 
 ```bash
