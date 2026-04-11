@@ -52,7 +52,7 @@ Scegli **un** ingresso principale sulla porta 80 per evitare conflitti tra contr
 Per poter applicare `k8s/09-gateway-api.yaml`, installa le CRD del [Gateway API](https://gateway-api.sigs.k8s.io/) (channel **standard**), ad esempio dalla stessa versione supportata da NGINX Gateway Fabric:
 
 ```bash
-kubectl kustomize "https://github.com/nginx/nginx-gateway-fabric/config/crd/gateway-api/standard?ref=v2.5.0" | kubectl apply -f -
+kubectl kustomize "https://github.com/nginx/nginx-gateway-fabric/config/crd/gateway-api/experimental?ref=v2.5.0" | kubectl apply -f -
 ```
 
 Se non usi affatto Gateway API, puoi omettere questo passaggio e applicare i manifest `k8s` tranne `09-gateway-api.yaml`.

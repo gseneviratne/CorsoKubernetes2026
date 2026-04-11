@@ -1,0 +1,98 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress-egress
+  namespace: np-app
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+# DNS egress corretto: seleziona kube-system tramite label standard.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns-egress
+  namespace: np-app
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+# Consente frontend -> api (stesso namespace) su 5678.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-allow-from-frontend
+  namespace: np-app
+spec:
+  podSelector:
+    matchLabels:
+      app: api
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: frontend
+      ports:
+        - protocol: TCP
+          port: 5678
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-allow-frontend-to-api
+  namespace: np-app
+spec:
+  podSelector:
+    matchLabels:
+      app: frontend
+  egress:
+    - ports:
+        - protocol: TCP
+          port: 5678
+      to:
+        - podSelector:
+            matchLabels:
+              app: api
+  policyTypes:
+    - Egress
+---
+# Consente np-monitoring/scraper -> np-app/api su 5678 usando namespaceSelector + podSelector.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-allow-from-monitoring
+  namespace: np-app
+spec:
+  podSelector:
+    matchLabels:
+      app: api
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: np-monitoring
+          podSelector:
+            matchLabels:
+              app: scraper
+      ports:
+        - protocol: TCP
+          port: 5678
+

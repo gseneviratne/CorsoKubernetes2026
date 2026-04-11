@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: np-app
+  labels:
+    purpose: networkpolicy-lab
+    name: np-app
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: np-monitoring
+  labels:
+    purpose: networkpolicy-lab
+    name: np-monitoring
+
