@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Node
+metadata:
+  name: worker
+spec:
+  taints:
+    - key: workload
+      value: storage
+      effect: NoSchedule
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: storage-app
+spec:
+  tolerations:
+    - key: workload
+      operator: Equal
+      value: storage
+      effect: NoSchedule
+  containers:
+    - name: nginx
+      image: nginx:stable
+      ports:
+        - containerPort: 80
