@@ -83,7 +83,41 @@ Esempio con `ufw`:
 sudo ufw allow from 172.18.8.0/24 to any port nfs
 ```
 
-## 5. Creare il PersistentVolume
+## 5. Installare il client NFS sui nodi
+
+Esegui sui nodi Kubernetes:
+
+```bash
+sudo apt update
+sudo apt install -y nfs-common
+sudo systemctl restart kubelet
+```
+
+## 6. Creare la StorageClass
+
+Per usare in modo esplicito la classe `nfs-manual`, crea prima anche la relativa `StorageClass`.
+
+Salva questo file come `storageclass-nfs.yaml`:
+
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: nfs-manual
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: Immediate
+```
+
+Applica la risorsa:
+
+```bash
+kubectl apply -f storageclass-nfs.yaml
+kubectl get storageclass
+```
+
+Questa `StorageClass` non effettua provisioning dinamico: serve a dare un nome coerente al `PersistentVolume` e al `PersistentVolumeClaim` che creerai nei passaggi successivi.
+
+## 7. Creare il PersistentVolume
 
 Salva questo file come `pv-nfs.yaml`:
 
@@ -111,7 +145,7 @@ kubectl apply -f pv-nfs.yaml
 kubectl get pv
 ```
 
-## 6. Creare il PersistentVolumeClaim
+## 8. Creare il PersistentVolumeClaim
 
 Salva questo file come `pvc-nfs.yaml`:
 
@@ -138,7 +172,7 @@ kubectl get pvc
 
 Il PVC deve andare in stato `Bound`.
 
-## 7. Deployment di esempio
+## 9. Deployment di esempio
 
 Questo esempio usa:
 
@@ -202,7 +236,7 @@ kubectl rollout status deployment/nginx-nfs-demo
 kubectl get pod -l app=nginx-nfs-demo
 ```
 
-## 8. Verifica del mount
+## 10. Verifica del mount
 
 Controlla che il file sia stato scritto sul volume condiviso:
 
