@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-credentials
+  namespace: rbac-lab
+type: Opaque
+stringData:
+  username: lab-user
+  password: super-secret
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  namespace: rbac-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+        - name: web
+          image: busybox:1.36.1
+          command: ["sh", "-lc"]
+          args:
+            - "sleep 365d"

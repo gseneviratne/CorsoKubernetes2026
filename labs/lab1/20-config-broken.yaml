@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: lab1
+data:
+  APP_MODE: "production"
+  APP_GREETING: "ciao dal ConfigMap"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-secret
+  namespace: lab1
+type: Opaque
+stringData:
+  API_TOKEN: "s3cr3t-token"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-config
+  namespace: lab1
+  labels:
+    app: web-config
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web-config
+  template:
+    metadata:
+      labels:
+        app: web-config
+    spec:
+      containers:
+        - name: web
+          image: busybox:1.36.1
+          command: ["sh", "-lc"]
+          args:
+            - |
+              echo "MODE=${APP_MODE} GREETING=${APP_GREETING} TOKEN=${API_TOKEN}";
+              sleep 365d
+          env:
+            - name: APP_MODE
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: MODE
+            - name: APP_GREETING
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: APP_GREETING
+            - name: API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: TOKEN

@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web-init
+  namespace: lab1
+  labels:
+    app: web-init
+spec:
+  initContainers:
+    - name: wait-for-file
+      image: busybox:1.36.1
+      command: ["sh", "-lc"]
+      args:
+        - |
+          echo "preparo /shared/ready...";
+          echo ok > /shared/ready;
+          echo "init completato"
+      volumeMounts:
+        - name: shared
+          mountPath: /shared
+  containers:
+    - name: web
+      image: busybox:1.36.1
+      command: ["sh", "-lc"]
+      args:
+        - "echo avvio app; cat /shared/ready; sleep 365d"
+      volumeMounts:
+        - name: shared
+          mountPath: /shared
+  volumes:
+    - name: shared
+      emptyDir: {}
