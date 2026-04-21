@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-resources
+  namespace: lab2
+  labels:
+    app: web-resources
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web-resources
+  template:
+    metadata:
+      labels:
+        app: web-resources
+    spec:
+      containers:
+        - name: web
+          image: hashicorp/http-echo:1.0.0
+          args:
+            - "-listen=:8080"
+            - "-text=ckad-resources-ok"
+          ports:
+            - name: http
+              containerPort: 8080
+          resources:
+            requests:
+              cpu: "32"
+              memory: "64Gi"
+            limits:
+              cpu: "64"
+              memory: "128Gi"

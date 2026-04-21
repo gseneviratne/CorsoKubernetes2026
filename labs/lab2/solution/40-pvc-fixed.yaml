@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: data-pvc
+  namespace: lab2
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 200Mi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web-pvc
+  namespace: lab2
+  labels:
+    app: web-pvc
+spec:
+  containers:
+    - name: web
+      image: busybox:1.36.1
+      command: ["sh", "-lc"]
+      args:
+        - |
+          echo "hello from pvc" > /data/hello.txt;
+          sleep 365d
+      volumeMounts:
+        - name: data
+          mountPath: /data
+  volumes:
+    - name: data
+      persistentVolumeClaim:
+        claimName: data-pvc

@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web-sidecar
+  namespace: lab2
+  labels:
+    app: web-sidecar
+spec:
+  containers:
+    - name: app
+      image: busybox:1.36.1
+      command: ["sh", "-lc"]
+      args:
+        - |
+          i=0;
+          while true; do
+            echo "$(date) - evento applicativo #$i" >> /var/log/app.log;
+            i=$((i+1));
+            sleep 3;
+          done
+      volumeMounts:
+        - name: logs
+          mountPath: /var/log
+    - name: log-reader
+      image: busybox:1.36.1
+      command: ["sh", "-lc"]
+      args:
+        - |
+          echo "Attendo che il file dei log compaia...";
+          until [ -f /logs/app.log ]; do sleep 2; done;
+          tail -F /logs/app.log
+      volumeMounts:
+        - name: logs
+          mountPath: /logs
+  volumes:
+    - name: logs
+      emptyDir: {}
