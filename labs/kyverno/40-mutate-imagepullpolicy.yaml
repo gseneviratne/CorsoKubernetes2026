@@ -1,0 +1,36 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: set-imagepullpolicy-always
+  annotations:
+    policies.kyverno.io/title: Force imagePullPolicy Always on latest
+    policies.kyverno.io/category: Mutate
+    policies.kyverno.io/severity: low
+    policies.kyverno.io/description: >-
+      Quando un Pod usa un'immagine con tag `:latest`, forza
+      `imagePullPolicy: Always`. Esempio di policy mutate con JSON patches
+      mirate (foreach sui container).
+spec:
+  background: false
+  rules:
+    - name: set-always-for-latest
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - kyverno-lab
+      mutate:
+        foreach:
+          - list: "request.object.spec.containers"
+            preconditions:
+              all:
+                - key: "{{ element.image }}"
+                  operator: Equals
+                  value: "*:latest"
+            patchStrategicMerge:
+              spec:
+                containers:
+                  - name: "{{ element.name }}"
+                    imagePullPolicy: Always

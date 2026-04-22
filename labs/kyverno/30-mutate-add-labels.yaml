@@ -1,0 +1,29 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: add-default-labels
+  annotations:
+    policies.kyverno.io/title: Add default labels
+    policies.kyverno.io/category: Mutate
+    policies.kyverno.io/severity: low
+    policies.kyverno.io/description: >-
+      Aggiunge automaticamente le label `environment=dev` e `managed-by=kyverno`
+      a tutti i Pod creati nel namespace kyverno-lab (se non già presenti).
+      Esempio di policy di tipo mutate con strategic merge patch.
+spec:
+  background: false
+  rules:
+    - name: add-labels
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - kyverno-lab
+      mutate:
+        patchStrategicMerge:
+          metadata:
+            labels:
+              +(environment): dev
+              +(managed-by): kyverno

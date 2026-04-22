@@ -1,0 +1,30 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-team-label
+  annotations:
+    policies.kyverno.io/title: Require team label
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      Richiede che ogni Pod creato nel namespace kyverno-lab abbia la label `team`.
+      Policy di tipo validate con azione Enforce: le richieste che violano la
+      policy vengono rifiutate dall'admission controller.
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+    - name: check-team-label
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - kyverno-lab
+      validate:
+        message: "La label 'team' è obbligatoria su tutti i Pod nel namespace kyverno-lab."
+        pattern:
+          metadata:
+            labels:
+              team: "?*"

@@ -1,0 +1,40 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: generate-default-deny-netpol
+  annotations:
+    policies.kyverno.io/title: Generate default-deny NetworkPolicy
+    policies.kyverno.io/category: Generate
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      Genera automaticamente una NetworkPolicy `default-deny` in ogni namespace
+      che abbia la label `kyverno-demo=true`. Se la NetworkPolicy viene
+      modificata o cancellata, Kyverno la ripristina (synchronize: true).
+      Esempio di policy di tipo generate.
+spec:
+  background: true
+  rules:
+    - name: default-deny-all
+      match:
+        any:
+          - resources:
+              kinds:
+                - Namespace
+              selector:
+                matchLabels:
+                  kyverno-demo: "true"
+      generate:
+        apiVersion: networking.k8s.io/v1
+        kind: NetworkPolicy
+        name: default-deny
+        namespace: "{{ request.object.metadata.name }}"
+        synchronize: true
+        data:
+          metadata:
+            labels:
+              generated-by: kyverno
+          spec:
+            podSelector: {}
+            policyTypes:
+              - Ingress
+              - Egress
