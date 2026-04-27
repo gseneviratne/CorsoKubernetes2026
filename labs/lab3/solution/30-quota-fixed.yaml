@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: lab3-quota
+  namespace: lab3
+spec:
+  hard:
+    requests.cpu: "1"
+    requests.memory: "1Gi"
+    limits.cpu: "2"
+    limits.memory: "2Gi"
+    pods: "10"
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: lab3-limits
+  namespace: lab3
+spec:
+  limits:
+    - type: Container
+      max:
+        cpu: "500m"
+        memory: "256Mi"
+      min:
+        cpu: "10m"
+        memory: "16Mi"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-quota
+  namespace: lab3
+  labels:
+    app: web-quota
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web-quota
+  template:
+    metadata:
+      labels:
+        app: web-quota
+    spec:
+      containers:
+        - name: web
+          image: hashicorp/http-echo:1.0.0
+          args:
+            - "-listen=:8080"
+            - "-text=ckad-quota-ok"
+          ports:
+            - name: http
+              containerPort: 8080
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"

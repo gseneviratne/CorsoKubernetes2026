@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: critical-app
+  namespace: lab4
+  labels:
+    app: critical-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: critical-app
+  template:
+    metadata:
+      labels:
+        app: critical-app
+    spec:
+      nodeSelector:
+        topology.kubernetes.io/zone: eu-west-1a
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/os
+                    operator: In
+                    values: ["windows"]
+      topologySpreadConstraints:
+        - maxSkew: 0
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: critical-app
+      containers:
+        - name: web
+          image: hashicorp/http-echo:1.0.0
+          args:
+            - "-listen=:8080"
+            - "-text=cka-critical-ok"
+          ports:
+            - name: http
+              containerPort: 8080
+          resources:
+            requests:
+              cpu: "20m"
+              memory: "32Mi"
+            limits:
+              cpu: "100m"
+              memory: "64Mi"

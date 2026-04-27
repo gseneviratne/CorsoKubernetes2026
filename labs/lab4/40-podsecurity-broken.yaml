@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: secure-data
+  namespace: lab4
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 100Mi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: secure-app
+  namespace: lab4
+  labels:
+    app: secure-app
+spec:
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 3000
+    runAsNonRoot: true
+  initContainers:
+    - name: seed-data
+      image: busybox:1.36.1
+      command: ["sh", "-lc"]
+      args:
+        - |
+          echo "seed $(date)" > /data/seed.txt;
+          echo "init done"
+      securityContext:
+        runAsUser: 0
+        runAsNonRoot: false
+      volumeMounts:
+        - name: data
+          mountPath: /data
+  containers:
+    - name: app
+      image: busybox:1.36.1
+      command: ["sh", "-lc"]
+      args:
+        - |
+          echo "[$(date)] app started" > /var/log/app.log;
+          echo "current seed:";
+          cat /data/seed.txt;
+          while true; do
+            echo "[$(date)] tick" >> /var/log/app.log;
+            sleep 10;
+          done
+      securityContext:
+        readOnlyRootFilesystem: true
+        allowPrivilegeEscalation: false
+      volumeMounts:
+        - name: data
+          mountPath: /data
+  volumes:
+    - name: data
+      persistentVolumeClaim:
+        claimName: secure-data

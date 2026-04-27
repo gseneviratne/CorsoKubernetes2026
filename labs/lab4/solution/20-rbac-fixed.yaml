@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: api-reader
+  namespace: lab4
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: list-services
+  namespace: lab4
+rules:
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: list-services-binding
+  namespace: lab4
+subjects:
+  - kind: ServiceAccount
+    name: api-reader
+    namespace: lab4
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: list-services
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: rbac-tester
+  namespace: lab4
+  labels:
+    app: rbac-tester
+spec:
+  serviceAccountName: api-reader
+  containers:
+    - name: kubectl
+      image: bitnami/kubectl:1.30.2
+      command: ["sh", "-lc"]
+      args:
+        - |
+          while true; do
+            echo "[$(date)] === kubectl get services -n lab4 ===";
+            kubectl get services -n lab4 || echo "FAIL list services";
+            sleep 10;
+          done
