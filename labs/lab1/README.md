@@ -25,7 +25,7 @@ kubectl get nodes
 ### Applica il lab rotto
 
 ```bash
-kubectl apply -f labs/ckad-troubleshooting
+kubectl apply -f labs/lab1
 ```
 
 ### Sintomo iniziale atteso
