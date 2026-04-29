@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: portal
+  namespace: lab5
+  labels:
+    app: portal
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: portal
+  template:
+    metadata:
+      labels:
+        app: portal
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.27
+        ports:
+        - name: http
+          containerPort: 80
+        envFrom:
+        - configMapRef:
+            name: portal-env
+        env:
+        - name: API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: portal-secret
+              key: API_TOKEN
+        volumeMounts:
+        - name: portal-page
+          mountPath: /usr/share/nginx/html/index.html
+          subPath: index.html
+      volumes:
+      - name: portal-page
+        configMap:
+          name: portal-page
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: portal
+  namespace: lab5
+  labels:
+    app: portal
+spec:
+  type: ClusterIP
+  selector:
+    app: portal
+  ports:
+  - name: http
+    port: 80
+    targetPort: http

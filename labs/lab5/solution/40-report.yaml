@@ -1,0 +1,89 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: report-script
+  namespace: lab5
+data:
+  report.sh: |
+    #!/bin/sh
+    set -eu
+    echo "report_date=$(date -Iseconds)"
+    echo "namespace=${POD_NAMESPACE}"
+    echo "app_mode=${APP_MODE}"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: report-once
+  namespace: lab5
+  labels:
+    app: report
+spec:
+  backoffLimit: 2
+  template:
+    metadata:
+      labels:
+        app: report
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: report
+        image: busybox:1.36
+        command:
+        - /scripts/report.sh
+        envFrom:
+        - configMapRef:
+            name: portal-env
+        env:
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        volumeMounts:
+        - name: report-script
+          mountPath: /scripts
+      volumes:
+      - name: report-script
+        configMap:
+          name: report-script
+          defaultMode: 0555
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: report-schedule
+  namespace: lab5
+spec:
+  schedule: "*/10 * * * *"
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app: report-schedule
+        spec:
+          restartPolicy: Never
+          containers:
+          - name: report
+            image: busybox:1.36
+            command:
+            - /scripts/report.sh
+            envFrom:
+            - configMapRef:
+                name: portal-env
+            env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            volumeMounts:
+            - name: report-script
+              mountPath: /scripts
+          volumes:
+          - name: report-script
+            configMap:
+              name: report-script
+              defaultMode: 0555
