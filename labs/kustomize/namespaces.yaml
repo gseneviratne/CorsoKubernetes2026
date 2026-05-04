@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: portal-dev
+  labels:
+    environment: dev
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: portal-prod
+  labels:
+    environment: prod

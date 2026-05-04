@@ -1,0 +1,48 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: portal-prod
+namePrefix: prod-
+
+resources:
+- ../../base
+
+labels:
+- includeSelectors: false
+  pairs:
+    environment: prod
+    tier: prod
+
+images:
+- name: nginx
+  newName: nginx
+  newTag: "1.27"
+
+replicas:
+- name: portal
+  count: 3
+
+configMapGenerator:
+- name: portal-env
+  behavior: replace
+  envs:
+  - files/app.properties
+- name: portal-page
+  behavior: replace
+  files:
+  - files/index.html
+
+secretGenerator:
+- name: portal-secret
+  literals:
+  - API_TOKEN=prod-super-secret
+
+patches:
+- path: patch-resources.yaml
+  target:
+    kind: Deployment
+    name: portal
+- path: patch-spread.yaml
+  target:
+    kind: Deployment
+    name: portal

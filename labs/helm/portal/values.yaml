@@ -1,0 +1,68 @@
+# Numero di repliche del Deployment.
+# Ignorato quando autoscaling.enabled e true.
+replicaCount: 1
+
+image:
+  repository: nginx
+  # Se vuoto usa .Chart.AppVersion (definito in Chart.yaml).
+  tag: ""
+  pullPolicy: IfNotPresent
+
+# Override del nome di base e del fullname generato.
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  # Se vuoto, viene generato a partire dal fullname.
+  name: ""
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: portal.local
+      paths:
+        - path: /
+          pathType: Prefix
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+
+# Variabili applicative iniettate via ConfigMap envFrom.
+config:
+  appMode: base
+  logLevel: info
+  featureFlags: basic
+
+# Secret opzionale per token API.
+# Quando enabled e true, apiToken diventa obbligatorio.
+secret:
+  enabled: false
+  apiToken: ""
+
+# Variabili extra aggiunte al container (lista come in Pod spec).
+env: []
+# - name: TZ
+#   value: Europe/Rome
+
+podAnnotations: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}

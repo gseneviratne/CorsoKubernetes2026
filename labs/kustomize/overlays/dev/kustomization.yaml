@@ -1,0 +1,38 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: portal-dev
+namePrefix: dev-
+
+resources:
+- ../../base
+
+labels:
+- includeSelectors: false
+  pairs:
+    environment: dev
+    tier: nonprod
+
+images:
+- name: nginx
+  newTag: "1.27-alpine"
+
+replicas:
+- name: portal
+  count: 1
+
+configMapGenerator:
+- name: portal-env
+  behavior: replace
+  envs:
+  - files/app.properties
+- name: portal-page
+  behavior: replace
+  files:
+  - files/index.html
+
+patches:
+- path: patch-deployment.yaml
+  target:
+    kind: Deployment
+    name: portal

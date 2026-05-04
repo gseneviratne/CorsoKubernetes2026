@@ -1,0 +1,16 @@
+- op: add
+  path: /spec/template/spec/topologySpreadConstraints
+  value:
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: ScheduleAnyway
+    labelSelector:
+      matchLabels:
+        app: portal
+- op: add
+  path: /spec/strategy
+  value:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1

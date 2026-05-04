@@ -1,0 +1,23 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- deployment.yaml
+- service.yaml
+
+labels:
+- includeSelectors: true
+  pairs:
+    app: portal
+    part-of: training
+
+configMapGenerator:
+- name: portal-env
+  envs:
+  - files/app.properties
+- name: portal-page
+  files:
+  - files/index.html
+
+generatorOptions:
+  disableNameSuffixHash: false

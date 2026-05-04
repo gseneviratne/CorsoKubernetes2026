@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "portal.fullname" . }}-env
+  labels:
+    {{- include "portal.labels" . | nindent 4 }}
+data:
+  APP_MODE: {{ .Values.config.appMode | quote }}
+  LOG_LEVEL: {{ .Values.config.logLevel | quote }}
+  FEATURE_FLAGS: {{ .Values.config.featureFlags | quote }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "portal.fullname" . }}-page
+  labels:
+    {{- include "portal.labels" . | nindent 4 }}
+data:
+  index.html: |
+    <!doctype html>
+    <html>
+      <head><title>Portal - {{ .Values.config.appMode }}</title></head>
+      <body>
+        <h1>Portal - {{ upper .Values.config.appMode }}</h1>
+        <p>Release: <code>{{ .Release.Name }}</code> nel namespace <code>{{ .Release.Namespace }}</code></p>
+        <p>Chart: {{ .Chart.Name }} v{{ .Chart.Version }} (app v{{ .Chart.AppVersion }})</p>
+      </body>
+    </html>

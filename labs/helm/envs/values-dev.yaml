@@ -1,0 +1,29 @@
+replicaCount: 1
+
+image:
+  tag: "1.27-alpine"
+
+config:
+  appMode: dev
+  logLevel: debug
+  featureFlags: experimental
+
+resources:
+  requests:
+    cpu: 25m
+    memory: 32Mi
+  limits:
+    cpu: 100m
+    memory: 64Mi
+
+env:
+  - name: ENVIRONMENT
+    value: dev
+
+ingress:
+  enabled: true
+  hosts:
+    - host: dev.portal.local
+      paths:
+        - path: /
+          pathType: Prefix

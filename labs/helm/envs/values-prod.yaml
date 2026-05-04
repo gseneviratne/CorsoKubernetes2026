@@ -1,0 +1,55 @@
+replicaCount: 3
+
+image:
+  tag: "1.27"
+
+config:
+  appMode: prod
+  logLevel: warn
+  featureFlags: stable
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+env:
+  - name: ENVIRONMENT
+    value: prod
+
+secret:
+  enabled: true
+  apiToken: "prod-super-secret"
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: 8m
+  hosts:
+    - host: portal.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+
+podAnnotations:
+  team: platform
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          topologyKey: kubernetes.io/hostname
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: portal
