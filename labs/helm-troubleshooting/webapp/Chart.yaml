@@ -1,0 +1,14 @@
+apiVersion: v2
+name: webapp
+description: Chart didattico volutamente rotto per il lab di troubleshooting Helm
+type: application
+# BUG A: il valore non rispetta SemVer (manca la patch). Helm lint lo segnala come errore.
+version: 0.1
+appVersion: "1.27"
+keywords:
+  - webapp
+  - training
+  - cka
+  - ckad
+maintainers:
+  - name: corso-kubernetes

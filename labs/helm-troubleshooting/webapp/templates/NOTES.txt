@@ -1,0 +1,10 @@
+Webapp installata nel namespace {{ .Release.Namespace }}.
+
+Per testare il Service:
+
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "webapp.fullname" . }} 8080:{{ .Values.service.port }}
+  curl http://localhost:8080
+
+Se ricevi "connection refused" o la richiesta resta in attesa, verifica:
+
+  kubectl -n {{ .Release.Namespace }} get endpoints {{ include "webapp.fullname" . }}

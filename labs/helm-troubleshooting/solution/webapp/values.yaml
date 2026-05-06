@@ -1,0 +1,28 @@
+replicaCount: 1
+
+image:
+  repository: nginx
+  tag: ""
+  pullPolicy: IfNotPresent
+
+nameOverride: ""
+fullnameOverride: ""
+
+service:
+  type: ClusterIP
+  port: 80
+
+# FIX C: appMode ora ha un default sensato; non e piu obbligatorio
+# valorizzarlo nel file di ambiente.
+config:
+  appMode: base
+  logLevel: info
+  featureFlags: basic
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 128Mi

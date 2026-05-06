@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "webapp.fullname" . }}
+  labels:
+    {{- include "webapp.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+  - name: http
+    port: {{ .Values.service.port }}
+    targetPort: http
+    protocol: TCP
+  # BUG D: selector hardcoded su "app: webapp", ma il Pod usa
+  # le label di "webapp.selectorLabels" (app.kubernetes.io/name e
+  # app.kubernetes.io/instance). Il Service viene creato ma resta
+  # senza endpoints, quindi non risponde.
+  selector:
+    app: webapp

@@ -1,0 +1,14 @@
+apiVersion: v2
+name: webapp
+description: Chart didattico - versione corretta per il lab di troubleshooting Helm
+type: application
+# FIX A: SemVer completo (major.minor.patch).
+version: 0.1.0
+appVersion: "1.27"
+keywords:
+  - webapp
+  - training
+  - cka
+  - ckad
+maintainers:
+  - name: corso-kubernetes

@@ -1,0 +1,6 @@
+replicaCount: 1
+image:
+  tag: "1.27-alpine"
+config:
+  logLevel: debug
+  featureFlags: experimental
