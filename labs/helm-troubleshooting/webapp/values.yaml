@@ -13,9 +13,6 @@ service:
   type: ClusterIP
   port: 80
 
-# Variabili applicative iniettate via ConfigMap envFrom.
-# BUG C: il template configmap.yaml usa "required" su config.appMode
-# ma qui la chiave non e definita. helm template fallisce.
 config:
   logLevel: info
   featureFlags: basic

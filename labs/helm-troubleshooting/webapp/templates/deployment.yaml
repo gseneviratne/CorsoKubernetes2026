@@ -7,10 +7,6 @@ metadata:
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
-    # BUG B: il selector usa una label che il pod template NON ha.
-    # Il pod template imposta "app.kubernetes.io/name" e "app.kubernetes.io/instance"
-    # tramite include "webapp.selectorLabels". L'API server rifiuta la Deployment
-    # con "selector does not match template labels".
     matchLabels:
       app: {{ include "webapp.name" . }}
   template:
