@@ -1,0 +1,39 @@
+# CRD MINIMA — Parte 1 del lab.
+#
+# Questa CRD definisce un nuovo tipo `WebApp` ma NON ha:
+#   - schema OpenAPI (qualunque YAML viene accettato come valido)
+#   - status subresource
+#   - additional printer columns
+#
+# Serve solo a far vedere cosa succede quando registri una CRD nel cluster:
+#   - `kubectl api-resources | grep webapps` la mostra come fosse nativa
+#   - puoi creare oggetti `WebApp` e kubectl li conserva in etcd
+#   - SENZA un controller, nessuno reagisce: gli oggetti restano lì come
+#     "righe in un database", e basta.
+#
+# Quando passi alla Parte 2 (20-crd-v1.yaml) la stessa CRD viene
+# RIDEFINITA con uno schema serio. Le CR già create dovranno rispettarlo.
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: webapps.training.example.com
+spec:
+  group: training.example.com
+  scope: Namespaced
+  names:
+    plural: webapps
+    singular: webapp
+    kind: WebApp
+    shortNames:
+      - wa
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          # x-kubernetes-preserve-unknown-fields=true significa
+          # "non validare niente, accetta qualunque campo".
+          # E' il modo per avere una CRD "senza schema".
+          x-kubernetes-preserve-unknown-fields: true

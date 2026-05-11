@@ -1,0 +1,18 @@
+# Una WebApp minimale con la CRD "senza schema".
+# Nota: campi inventati come `qualcosaDiCasuale` vengono accettati,
+# perche' non c'e' nessuna validazione.
+apiVersion: training.example.com/v1alpha1
+kind: WebApp
+metadata:
+  name: hello-world
+  namespace: operator-lab
+spec:
+  image: nginx:1.27
+  replicas: 2
+  port: 80
+  message: "Ciao dal lab CRD/Operator"
+  qualcosaDiCasuale:
+    nested:
+      - 1
+      - 2
+      - "questo passa lo stesso"

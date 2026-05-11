@@ -1,0 +1,46 @@
+---
+# Load generator: martella demo-app con richieste, mischiando 200 e 500.
+# Serve a produrre traffico cosi' le dashboard non sono piatte.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: load-generator
+  namespace: monitoring
+  labels:
+    app: load-generator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: load-generator
+  template:
+    metadata:
+      labels:
+        app: load-generator
+    spec:
+      containers:
+        - name: hey
+          image: curlimages/curl:8.10.1
+          command:
+            - sh
+            - -c
+            - |
+              set -eu
+              TARGET="http://demo-app.monitoring.svc.cluster.local:8080"
+              echo "Generating load against $TARGET ..."
+              while true; do
+                # ~10 richieste OK / sec
+                for i in $(seq 1 10); do
+                  curl -sS -o /dev/null "$TARGET/" || true
+                done
+                # ~1 errore / sec
+                curl -sS -o /dev/null "$TARGET/err" || true
+                sleep 1
+              done
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi

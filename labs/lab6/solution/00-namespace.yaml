@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lab6
+  labels:
+    purpose: cka-prod
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lab6-secure
+  labels:
+    purpose: cka-prod
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest

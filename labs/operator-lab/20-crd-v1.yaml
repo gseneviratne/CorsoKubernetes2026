@@ -1,0 +1,102 @@
+# CRD "v1" — Parte 2 del lab.
+#
+# Stessa CRD `webapps.training.example.com` ma con tutto cio' che ti serve
+# per renderla utilizzabile in produzione:
+#
+#   1. SCHEMA OpenAPI v3: validation lato API server (rifiuta i campi sbagliati)
+#   2. STATUS subresource: separa /status dal resto, cosi' chi aggiorna lo
+#      stato non sovrascrive accidentalmente la spec (e viceversa)
+#   3. ADDITIONAL PRINTER COLUMNS: cosa mostra `kubectl get webapp`
+#   4. SHORT NAMES: `kubectl get wa`
+#
+# Applicare questo file SOSTITUISCE la CRD minimale precedente.
+# La WebApp `hello-world` creata prima rimane (i dati sono in etcd) ma se
+# contiene campi non previsti dallo schema verra' marcata invalida al primo
+# update.
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: webapps.training.example.com
+spec:
+  group: training.example.com
+  scope: Namespaced
+  names:
+    plural: webapps
+    singular: webapp
+    kind: WebApp
+    shortNames:
+      - wa
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      # Abilita /status come subresource separata.
+      # Senza questo, una PATCH/UPDATE su /status non ha effetto.
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Image
+          type: string
+          jsonPath: .spec.image
+        - name: Replicas
+          type: integer
+          jsonPath: .spec.replicas
+        - name: Phase
+          type: string
+          jsonPath: .status.phase
+        - name: URL
+          type: string
+          jsonPath: .status.url
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
+      schema:
+        openAPIV3Schema:
+          type: object
+          required:
+            - spec
+          properties:
+            spec:
+              type: object
+              required:
+                - image
+              properties:
+                image:
+                  type: string
+                  description: "Immagine del container (es. nginx:1.27)"
+                  minLength: 1
+                replicas:
+                  type: integer
+                  description: "Numero di repliche del Deployment"
+                  minimum: 1
+                  maximum: 10
+                  default: 1
+                port:
+                  type: integer
+                  description: "Porta su cui il container ascolta"
+                  minimum: 1
+                  maximum: 65535
+                  default: 80
+                message:
+                  type: string
+                  description: "Messaggio passato al container via env WEBAPP_MESSAGE"
+                  maxLength: 200
+            status:
+              type: object
+              # Lo status viene scritto SOLO dall'operator. Il client (kubectl
+              # apply) non puo' modificarlo grazie alla subresource.
+              properties:
+                phase:
+                  type: string
+                  enum:
+                    - Pending
+                    - Running
+                    - Failed
+                deploymentName:
+                  type: string
+                serviceName:
+                  type: string
+                observedReplicas:
+                  type: integer
+                url:
+                  type: string

@@ -1,0 +1,13 @@
+# Una seconda WebApp completamente indipendente, per dimostrare che
+# l'operator gestisce N istanze nello stesso namespace.
+# Immagine diversa (httpd al posto di nginx), conteggio repliche diverso.
+apiVersion: training.example.com/v1alpha1
+kind: WebApp
+metadata:
+  name: api-mock
+  namespace: operator-lab
+spec:
+  image: httpd:2.4-alpine
+  replicas: 2
+  port: 80
+  message: "ciao da api-mock"

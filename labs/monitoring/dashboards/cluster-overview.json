@@ -1,0 +1,108 @@
+{
+  "title": "Cluster Overview",
+  "uid": "cluster-overview",
+  "schemaVersion": 39,
+  "version": 1,
+  "tags": ["lab", "kubernetes", "cluster"],
+  "timezone": "browser",
+  "refresh": "30s",
+  "time": { "from": "now-30m", "to": "now" },
+  "templating": { "list": [] },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Nodi del cluster",
+      "gridPos": { "x": 0, "y": 0, "w": 4, "h": 4 },
+      "targets": [ { "expr": "count(kube_node_info)", "refId": "A" } ],
+      "fieldConfig": { "defaults": { "unit": "none", "color": { "mode": "thresholds" } } },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value" }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Pod Running",
+      "gridPos": { "x": 4, "y": 0, "w": 4, "h": 4 },
+      "targets": [ { "expr": "count(kube_pod_status_phase{phase=\"Running\"} == 1)", "refId": "A" } ],
+      "fieldConfig": { "defaults": { "unit": "none" } },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value" }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Pod NON Running",
+      "gridPos": { "x": 8, "y": 0, "w": 4, "h": 4 },
+      "targets": [ { "expr": "count(kube_pod_status_phase{phase!=\"Running\",phase!=\"Succeeded\"} == 1) or vector(0)", "refId": "A" } ],
+      "fieldConfig": { "defaults": { "unit": "none", "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "red", "value": 1 } ] } } },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" }
+    },
+    {
+      "id": 4,
+      "type": "gauge",
+      "title": "CPU cluster %",
+      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 6 },
+      "targets": [ { "expr": "100 * (1 - avg(rate(node_cpu_seconds_total{mode=\"idle\"}[5m])))", "refId": "A" } ],
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "yellow", "value": 70 }, { "color": "red", "value": 85 } ] } } }
+    },
+    {
+      "id": 5,
+      "type": "gauge",
+      "title": "Memoria cluster %",
+      "gridPos": { "x": 18, "y": 0, "w": 6, "h": 6 },
+      "targets": [ { "expr": "100 * (1 - sum(node_memory_MemAvailable_bytes) / sum(node_memory_MemTotal_bytes))", "refId": "A" } ],
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "yellow", "value": 70 }, { "color": "red", "value": 85 } ] } } }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Pod per fase nel tempo",
+      "gridPos": { "x": 0, "y": 6, "w": 12, "h": 8 },
+      "targets": [ { "expr": "sum by (phase) (kube_pod_status_phase)", "legendFormat": "{{phase}}", "refId": "A" } ],
+      "fieldConfig": { "defaults": { "unit": "none", "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 10, "stacking": { "mode": "normal" } } } }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Container restart rate (per minuto)",
+      "gridPos": { "x": 12, "y": 6, "w": 12, "h": 8 },
+      "targets": [ { "expr": "sum by (namespace, pod) (rate(kube_pod_container_status_restarts_total[5m])) * 60 > 0", "legendFormat": "{{namespace}}/{{pod}}", "refId": "A" } ],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 8,
+      "type": "table",
+      "title": "Top 10 Pod per CPU",
+      "gridPos": { "x": 0, "y": 14, "w": 12, "h": 10 },
+      "targets": [
+        {
+          "expr": "topk(10, sum by (namespace, pod) (rate(container_cpu_usage_seconds_total{container!=\"\",pod!=\"\"}[5m])))",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "none", "custom": { "align": "auto" } } },
+      "transformations": [
+        { "id": "organize", "options": { "excludeByName": { "Time": true }, "renameByName": { "Value": "CPU (core)" } } }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "table",
+      "title": "Top 10 Pod per memoria",
+      "gridPos": { "x": 12, "y": 14, "w": 12, "h": 10 },
+      "targets": [
+        {
+          "expr": "topk(10, sum by (namespace, pod) (container_memory_working_set_bytes{container!=\"\",pod!=\"\"}))",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "bytes" } },
+      "transformations": [
+        { "id": "organize", "options": { "excludeByName": { "Time": true }, "renameByName": { "Value": "Working set" } } }
+      ]
+    }
+  ]
+}

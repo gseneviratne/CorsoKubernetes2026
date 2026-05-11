@@ -1,0 +1,70 @@
+---
+# Demo app: usa "prometheus-example-app", una piccola web app che espone:
+#   - GET /        -> 200 OK (incrementa http_requests_total{path="/"})
+#   - GET /err     -> 500   (utile per produrre errori)
+#   - GET /metrics -> testo Prometheus con http_requests_total e http_request_duration_seconds
+# Le annotation prometheus.io/* fanno si' che il job "kubernetes-pods" la scopra automaticamente.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-app
+  namespace: monitoring
+  labels:
+    app: demo-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: demo-app
+  template:
+    metadata:
+      labels:
+        app: demo-app
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+        - name: app
+          image: quay.io/brancz/prometheus-example-app:v0.5.0
+          args:
+            - --bind=:8080
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          # Volutamente sottodimensionato cosi' la dashboard "Pod Resources"
+          # mostra subito un caso reale di pod con consumo vicino al limit.
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-app
+  namespace: monitoring
+  labels:
+    app: demo-app
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8080"
+    prometheus.io/path: "/metrics"
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+  selector:
+    app: demo-app

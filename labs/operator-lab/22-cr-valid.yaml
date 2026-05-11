@@ -1,0 +1,14 @@
+# WebApp valida secondo lo schema della CRD v1.
+# Si puo' applicare anche PRIMA di installare l'operator: l'API server la
+# accetta e la salva. Pero' nessuno creera' Deployment/Service finche'
+# l'operator non parte.
+apiVersion: training.example.com/v1alpha1
+kind: WebApp
+metadata:
+  name: ciao-mondo
+  namespace: operator-lab
+spec:
+  image: nginx:1.27
+  replicas: 2
+  port: 80
+  message: "Ciao dal lab Operator!"

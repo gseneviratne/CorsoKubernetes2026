@@ -1,0 +1,20 @@
+# Esempio di WebApp che VIOLA lo schema della CRD v1.
+# Provando ad applicarlo con `kubectl apply -f` ti aspetti un errore di
+# validation lato API server (HTTP 422), del tipo:
+#
+#   spec.replicas: Invalid value: 99: spec.replicas in body should be
+#     less than or equal to 10
+#   spec.port: Invalid value: 99999: spec.port in body should be less than
+#     or equal to 65535
+#   spec.image: Required value
+#
+# E' la dimostrazione che la validazione avviene PRIMA che l'oggetto sia
+# scritto in etcd: l'operator non vedra' mai questa risorsa.
+apiVersion: training.example.com/v1alpha1
+kind: WebApp
+metadata:
+  name: webapp-broken
+  namespace: operator-lab
+spec:
+  replicas: 99
+  port: 99999

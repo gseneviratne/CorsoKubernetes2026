@@ -1,0 +1,16 @@
+# Stessa WebApp di 40-webapp-sample.yaml ma con replicas=3 e una nuova
+# immagine (nginx:1.27-alpine).
+# Applicandola sopra l'altra (`kubectl apply -f`) ti aspetti che l'operator:
+#   1. patchi il Deployment portandolo a 3 repliche
+#   2. cambi l'immagine, scatenando un rolling update
+#   3. aggiorni .status.observedReplicas a 3
+apiVersion: training.example.com/v1alpha1
+kind: WebApp
+metadata:
+  name: sito-demo
+  namespace: operator-lab
+spec:
+  image: nginx:1.27-alpine
+  replicas: 3
+  port: 80
+  message: "WebApp scalata a 3 repliche con nginx alpine"

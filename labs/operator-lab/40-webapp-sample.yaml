@@ -1,0 +1,13 @@
+# WebApp di esempio: una volta applicata, l'operator deve creare
+# automaticamente un Deployment `sito-demo` (1 replica, nginx:1.27)
+# e un Service ClusterIP `sito-demo` sulla porta 80.
+apiVersion: training.example.com/v1alpha1
+kind: WebApp
+metadata:
+  name: sito-demo
+  namespace: operator-lab
+spec:
+  image: nginx:1.27
+  replicas: 1
+  port: 80
+  message: "Prima WebApp gestita dall'operator!"

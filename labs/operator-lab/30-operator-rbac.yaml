@@ -1,0 +1,84 @@
+# RBAC per il `webapp-operator`.
+#
+# Idea generale: un operator deve poter
+#   1. OSSERVARE le CR che gestisce         -> get/list/watch su webapps
+#   2. AGGIORNARNE LO STATUS                -> patch su webapps/status
+#   3. METTERE/TOGLIERE FINALIZER           -> patch su webapps (kopf li usa
+#                                              per reagire correttamente alle
+#                                              cancellazioni)
+#   4. CREARE le risorse "owned" (D + Svc)  -> CRUD su deployments e services
+#   5. Postare EVENTI nel namespace         -> create/patch su events
+#
+# Il ClusterRole e' cluster-scoped ma il RoleBinding e' namespace-scoped:
+# l'operator agisce SOLO nel namespace `operator-lab`.
+# Per renderlo "cluster-wide" basta sostituire RoleBinding con
+# ClusterRoleBinding e togliere il filtro --namespace dal Deployment.
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: webapp-operator
+  namespace: operator-lab
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: webapp-operator
+rules:
+  # CR e status della CRD custom.
+  - apiGroups: ["training.example.com"]
+    resources: ["webapps"]
+    verbs: ["get", "list", "watch", "patch", "update"]
+  - apiGroups: ["training.example.com"]
+    resources: ["webapps/status"]
+    verbs: ["get", "update", "patch"]
+  - apiGroups: ["training.example.com"]
+    resources: ["webapps/finalizers"]
+    verbs: ["update"]
+
+  # Risorse "owned" che l'operator crea per ogni WebApp.
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+  # Eventi: kopf li posta per dare visibilita' su `kubectl describe`.
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["get", "list", "watch", "create", "patch"]
+
+  # Serve a kopf per scoprire le CRD e capire quali risorse osservare.
+  - apiGroups: ["apiextensions.k8s.io"]
+    resources: ["customresourcedefinitions"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: webapp-operator
+  namespace: operator-lab
+subjects:
+  - kind: ServiceAccount
+    name: webapp-operator
+    namespace: operator-lab
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: webapp-operator
+---
+# Per la sola "discovery" delle CRD serve cluster-scope:
+# customresourcedefinitions e' una risorsa cluster-wide.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: webapp-operator-crd-reader
+subjects:
+  - kind: ServiceAccount
+    name: webapp-operator
+    namespace: operator-lab
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: webapp-operator
