@@ -3,20 +3,20 @@
 Laboratorio didattico in tre parti, pensato per essere fatto in classe in
 sequenza. Alla fine avrai:
 
-1. **Parte 1 — La CRD nuda**: capisci cos'e' una `CustomResourceDefinition`,
-   come la registri, e cosa NON fa di suo (spoiler: niente).
+1. **Parte 1 — La CRD base**: capisci cos'e' una `CustomResourceDefinition`,
+   come la registri e quali sono i suoi limiti operativi.
 2. **Parte 2 — La CRD "professionale"**: schema OpenAPI per la validazione,
    `status` come subresource, printer columns, short names.
 3. **Parte 3 — L'operator**: scrivi un controller (in Python con `kopf`)
    che osserva le CR `WebApp` e crea automaticamente Deployment + Service.
    Verifichi update, scale, e cancellazione via garbage collection.
 
-L'esempio scelto e' una CRD `WebApp` perche' e' il "Hello World" degli
-operator: ogni studente capisce cosa significa "esponi un'app web", e la
-reconciliation logic e' a una vista d'occhio.
+L'esempio scelto e' una CRD `WebApp` perche' rappresenta un caso introduttivo
+chiaro: ogni studente capisce cosa significa "esporre un'app web" e la
+logica di riconciliazione resta immediata da seguire.
 
-> Per andare oltre questo lab, gli stessi concetti si scalano a operator
-> "veri" scritti in Go con [kubebuilder](https://book.kubebuilder.io/) o
+> Per andare oltre questo lab, gli stessi concetti si applicano a operator
+> di produzione scritti in Go con [kubebuilder](https://book.kubebuilder.io/) o
 > [operator-sdk](https://sdk.operatorframework.io/). Il loop di
 > reconciliation pero' e' identico a quello di `kopf`: osserva il mondo,
 > calcola lo stato desiderato, riconcilia. Vedi sezione finale.
@@ -26,7 +26,7 @@ reconciliation logic e' a una vista d'occhio.
 ## Prerequisiti
 
 - Un cluster Kubernetes >= 1.27 raggiungibile (`kubectl cluster-info`).
-  k3d/kind/minikube/k3s vanno benissimo.
+  k3d/kind/minikube/k3s sono opzioni adeguate.
 - I nodi devono poter raggiungere `pypi.org` (al primo avvio l'operator
   installa `kopf` e `kubernetes` via `pip`). Se sei in un ambiente
   air-gapped costruisci l'immagine con il `Dockerfile` fornito e usala
@@ -55,7 +55,7 @@ labs/operator-lab/
 ├── 30-operator-rbac.yaml           # Parte 3: SA + ClusterRole + Bindings
 ├── 31-operator-deploy.yaml         # Parte 3: Deployment dell'operator
 ├── 40-webapp-sample.yaml           # Parte 3: prima WebApp gestita
-├── 41-webapp-scaled.yaml           # Parte 3: stessa WebApp scalata a 3
+├── 41-webapp-scaled.yaml           # Parte 3: WebApp aggiornata a 3 repliche
 ├── 42-webapp-second.yaml           # Parte 3: una seconda WebApp indipendente
 └── operator/
     ├── main.py                     # codice dell'operator (~80 righe)
@@ -65,7 +65,7 @@ labs/operator-lab/
 
 ---
 
-# Parte 1 — La CRD nuda
+# Parte 1 — La CRD base
 
 Obiettivo: capire che una CRD, da sola, e' solo una **definizione di tipo**
 per l'API server. Niente comportamento.
@@ -95,7 +95,7 @@ Da questo momento il cluster sa che esiste un tipo `WebApp`, esattamente
 come sa che esiste `Deployment`. `kubectl get webapps -A` funziona, anche
 se per ora ritorna vuoto.
 
-## Passo 1.2 — Crea una WebApp e nota che non succede niente
+## Passo 1.2 — Crea una WebApp e osserva il comportamento iniziale
 
 ```bash
 kubectl apply -f labs/operator-lab/11-cr-minimal.yaml
@@ -124,7 +124,7 @@ perche' nello schema c'e':
 x-kubernetes-preserve-unknown-fields: true
 ```
 
-E' la posizione "non validare niente, accetta qualunque YAML". Utile per
+E' la posizione "non validare, accetta qualunque YAML". Utile per
 prototipare, **inaccettabile** in qualunque CRD seria. Vediamo perche'
 nella Parte 2.
 
@@ -189,12 +189,12 @@ NAME         IMAGE         REPLICAS   PHASE     URL    AGE
 ciao-mondo   nginx:1.27    2                           5s
 ```
 
-`PHASE` e `URL` sono vuoti perche' nessuno ancora aggiorna lo
-`status`: e' compito dell'operator, che installiamo subito.
+`PHASE` e `URL` sono vuoti perche' nessuno aggiorna ancora lo
+`status`: e' compito dell'operator, che installiamo nel prossimo passaggio.
 
 ## Passo 2.4 — La status subresource
 
-Verifica che `kubectl edit` NON ti permetta di modificare lo status
+Verifica che `kubectl edit` non ti permetta di modificare lo status
 "manualmente" come parte della spec:
 
 ```bash
@@ -208,7 +208,7 @@ kubectl edit webapp ciao-mondo -n operator-lab
 E' il comportamento della subresource `/status`: il client che fa
 PATCH/PUT su `/webapps/<n>` puo' toccare solo la spec; lo status si scrive
 SOLO via `PATCH /webapps/<n>/status`, e questo richiede un permesso RBAC
-distinto. E' la separazione "spec=desiderio dell'utente, status=verita'
+distinto. E' la separazione "spec=stato desiderato, status=stato osservato
 del controller".
 
 ---
@@ -279,7 +279,7 @@ Il primo avvio impiega ~30s perche' il container fa `pip install` di
 [INFO] Watching for training.example.com/v1alpha1/webapps in operator-lab
 ```
 
-Lascia il `logs -f` aperto in un terminale a parte: ti aiutera' a vedere
+Lascia il `logs -f` aperto in un terminale separato: aiuta a vedere
 gli handler scattare in tempo reale.
 
 ## Passo 3.4 — La WebApp `ciao-mondo` ora viene riconciliata
@@ -384,9 +384,9 @@ kubectl apply -f labs/operator-lab/42-webapp-second.yaml
 kubectl get webapp,deploy,svc,pod -n operator-lab
 ```
 
-Adesso hai DUE WebApp gestite dallo stesso operator: `sito-demo` e
+Adesso hai due WebApp gestite dallo stesso operator: `sito-demo` e
 `api-mock`. Per ognuna esiste un Deployment + Service. Hai dimostrato
-che un singolo operator scala a N istanze della stessa CR.
+che un singolo operator scala a N istanze della stessa risorsa custom.
 
 ## Passo 3.9 — Cancella la CR e osserva la cascade-delete
 
@@ -406,20 +406,20 @@ acknowledged" ma nessuna chiamata di cleanup.
 
 # Esercizi extra (consigliati)
 
-1. **Modifica il sorgente al volo**:
+1. **Modifica il sorgente con rollout controllato**:
    - Edita `operator/main.py` cambiando il valore di default di `image`
      in `nginx:1.25`.
    - Ricrea la ConfigMap (`kubectl create configmap ... --from-file ...
      --dry-run=client -o yaml | kubectl apply -f -`).
    - `kubectl rollout restart deploy/webapp-operator -n operator-lab`.
-   - Crea una WebApp senza `image` nello spec... ah no, l'API server
-     lo blocca: `image` e' `required`. Buona scoperta: la CRD ti
-     protegge anche dal tuo operator.
+   - Crea una WebApp senza `image` nello spec: l'API server la blocca
+     perche' `image` e' `required`. Questo conferma che la CRD protegge
+     il sistema anche da configurazioni incomplete.
 2. **Forza un drift**: `kubectl scale deploy ciao-mondo -n operator-lab
    --replicas=5`. Aspetta. Cosa succede? L'operator riconcilia? Il
    Deployment torna a 2? **Spoiler: no**, perche' il nostro handler
    e' su `@kopf.on.update(... field='spec')` della WebApp, non su
-   eventi del Deployment. In un operator "vero" aggiungeresti un
+   eventi del Deployment. In un operator di produzione aggiungeresti un
    `@kopf.on.update('apps', 'v1', 'deployments', labels={'managed-by':
    'webapp-operator'})` che richiama la reconcile. Provaci.
 3. **Aggiungi un nuovo campo allo schema**: `spec.serviceType` (enum:
@@ -428,7 +428,7 @@ acknowledged" ma nessuna chiamata di cleanup.
 4. **Aggiungi un printer column** che mostra `.status.observedReplicas`.
 5. **Conditions invece di phase**: cambia lo status per usare un array
    di `conditions` (Available, Progressing, Degraded) invece di un
-   singolo `phase`. E' lo standard usato dai controller K8s veri
+   singolo `phase`. E' lo standard usato dai controller Kubernetes
    (Deployment, ReplicaSet, ecc.).
 
 ---
@@ -470,8 +470,8 @@ identica. La differenza e' che con Go ottieni:
 - workqueue con rate-limit, retry esponenziale, leader election
 - generazione automatica della CRD dal tipo Go (single source of truth)
 
-Per la classe / per imparare, kopf vince per leggibilita'. Per la
-produzione, kubebuilder vince per robustezza.
+Per la didattica, kopf e' molto leggibile. In produzione, kubebuilder
+offre maggiore robustezza operativa.
 
 ---
 
@@ -534,6 +534,6 @@ k3d cluster delete operator-lab
   OpenAPI a far funzionare `explain`.
 - **L'operator funziona, ma `kubectl scale deploy` torna sempre indietro
   alle repliche della WebApp**.
-  No, il nostro lab NON fa questo. Il nostro `reconcile` scatta solo su
+  In questo lab non accade: il nostro `reconcile` scatta solo su
   cambi della spec della WebApp. Vedi Esercizio extra #2 per
   implementare anche il drift-detect sul Deployment.
